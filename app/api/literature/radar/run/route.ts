@@ -663,7 +663,12 @@ export async function POST(request: Request) {
             throw runError;
         }
 
-        radarRunId = runData.id;
+        if (!runData?.id) {
+            throw new Error("Failed to create literature radar run.");
+        }
+
+        const activeRadarRunId: string = runData.id;
+        radarRunId = activeRadarRunId;
 
         let topicsQuery = supabaseAdmin
             .from("research_topics")
@@ -732,10 +737,16 @@ export async function POST(request: Request) {
                         isNew = true;
                     }
 
+                    const activeRadarRunId = radarRunId;
+
+                    if (!activeRadarRunId) {
+                        throw new Error("Literature radar run ID was not created.");
+                    }
+
                     await upsertPaperTopicMatch(
                         paperId,
                         topic,
-                        radarRunId,
+                        activeRadarRunId,
                         scores,
                         isNew
                     );
