@@ -1,26 +1,406 @@
 @import "tailwindcss";
 
+/* =========================
+   ResearchOS Global Theme
+   ========================= */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f6f8fb;
+  --foreground: #0f172a;
+
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+
+  --muted: #eef2f7;
+  --muted-foreground: #475569;
+
+  --soft: #f8fafc;
+  --soft-foreground: #334155;
+
+  --border: #cbd5e1;
+
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
+
+  --secondary: #475569;
+  --secondary-foreground: #ffffff;
+
+  --success: #15803d;
+  --warning: #b45309;
+  --danger: #dc2626;
+
+  --focus-ring: #2563eb;
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+html[data-theme="dark"] {
+  --background: #020617;
+  --foreground: #e5e7eb;
+
+  --card: #0f172a;
+  --card-foreground: #f8fafc;
+
+  --muted: #1e293b;
+  --muted-foreground: #cbd5e1;
+
+  --soft: #111827;
+  --soft-foreground: #d1d5db;
+
+  --border: #334155;
+
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* =========================
+   Base readability
+   ========================= */
+
+html {
+  min-height: 100%;
+  font-size: 17px;
+  scroll-behavior: smooth;
+  background: var(--background);
+  color: var(--foreground);
 }
 
 body {
+  min-height: 100vh;
+  margin: 0;
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-size: 1rem;
+  line-height: 1.65;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::selection {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+/* Better default text scale */
+h1 {
+  font-size: clamp(2rem, 4vw, 3.75rem);
+  line-height: 1.1;
+  letter-spacing: -0.035em;
+}
+
+h2 {
+  font-size: clamp(1.5rem, 2.5vw, 2.25rem);
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+}
+
+h3 {
+  font-size: clamp(1.2rem, 2vw, 1.5rem);
+  line-height: 1.3;
+}
+
+p {
+  line-height: 1.7;
+}
+
+/* Better tables */
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.98rem;
+}
+
+th {
+  background: var(--muted);
+  color: var(--foreground);
+  font-weight: 700;
+}
+
+td,
+th {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+/* Better forms */
+input,
+textarea,
+select {
+  background: var(--card);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  line-height: 1.5;
+  padding: 0.7rem 0.85rem;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--muted-foreground);
+}
+
+input:focus,
+textarea:focus,
+select:focus,
+button:focus-visible,
+a:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+button,
+a {
+  transition:
+    background-color 0.18s ease,
+    color 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
+}
+
+/* =========================
+   Theme utility classes
+   ========================= */
+
+.theme-page {
+  min-height: 100vh;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.theme-container {
+  width: 100%;
+  max-width: 1280px;
+  margin-inline: auto;
+  padding-inline: 1.5rem;
+  padding-block: 2rem;
+}
+
+.theme-section {
+  margin-top: 1.5rem;
+}
+
+.theme-card {
+  background: var(--card);
+  color: var(--card-foreground);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 10px 30px rgba(15, 23, 42, 0.06);
+}
+
+.theme-card-soft {
+  background: var(--soft);
+  color: var(--soft-foreground);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.theme-muted {
+  background: var(--muted);
+  color: var(--muted-foreground);
+  border-radius: var(--radius-lg);
+}
+
+.theme-heading {
+  color: var(--foreground);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+}
+
+.theme-subheading {
+  color: var(--muted-foreground);
+  font-size: 1.05rem;
+  line-height: 1.75;
+}
+
+.theme-label {
+  color: var(--muted-foreground);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.theme-button-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  background: var(--primary);
+  color: var(--primary-foreground);
+  padding: 0.7rem 1rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.theme-button-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  background: var(--card);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+  padding: 0.7rem 1rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.theme-button-primary:hover,
+.theme-button-secondary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+}
+
+/* Tailwind-compatible theme classes */
+.bg-background {
+  background-color: var(--background) !important;
+}
+
+.text-foreground {
+  color: var(--foreground) !important;
+}
+
+.bg-card {
+  background-color: var(--card) !important;
+}
+
+.text-card-foreground {
+  color: var(--card-foreground) !important;
+}
+
+.bg-muted {
+  background-color: var(--muted) !important;
+}
+
+.text-muted-foreground {
+  color: var(--muted-foreground) !important;
+}
+
+.border-border {
+  border-color: var(--border) !important;
+}
+
+.bg-primary {
+  background-color: var(--primary) !important;
+}
+
+.text-primary-foreground {
+  color: var(--primary-foreground) !important;
+}
+
+/* =========================
+   Readability fixes for pages
+   that still use hard-coded dark classes
+   ========================= */
+
+/* Light mode overrides */
+html[data-theme="light"] .bg-black,
+html[data-theme="light"] .bg-gray-950,
+html[data-theme="light"] .bg-slate-950,
+html[data-theme="light"] .bg-zinc-950,
+html[data-theme="light"] .bg-neutral-950 {
+  background-color: var(--background) !important;
+}
+
+html[data-theme="light"] .bg-gray-900,
+html[data-theme="light"] .bg-slate-900,
+html[data-theme="light"] .bg-zinc-900,
+html[data-theme="light"] .bg-neutral-900 {
+  background-color: var(--card) !important;
+}
+
+html[data-theme="light"] .bg-gray-800,
+html[data-theme="light"] .bg-slate-800,
+html[data-theme="light"] .bg-zinc-800,
+html[data-theme="light"] .bg-neutral-800 {
+  background-color: var(--muted) !important;
+}
+
+html[data-theme="light"] .text-white,
+html[data-theme="light"] .text-gray-50,
+html[data-theme="light"] .text-gray-100,
+html[data-theme="light"] .text-gray-200,
+html[data-theme="light"] .text-slate-50,
+html[data-theme="light"] .text-slate-100,
+html[data-theme="light"] .text-slate-200,
+html[data-theme="light"] .text-zinc-50,
+html[data-theme="light"] .text-zinc-100,
+html[data-theme="light"] .text-zinc-200 {
+  color: var(--foreground) !important;
+}
+
+html[data-theme="light"] .text-gray-300,
+html[data-theme="light"] .text-gray-400,
+html[data-theme="light"] .text-slate-300,
+html[data-theme="light"] .text-slate-400,
+html[data-theme="light"] .text-zinc-300,
+html[data-theme="light"] .text-zinc-400 {
+  color: var(--muted-foreground) !important;
+}
+
+html[data-theme="light"] .border-gray-700,
+html[data-theme="light"] .border-gray-800,
+html[data-theme="light"] .border-slate-700,
+html[data-theme="light"] .border-slate-800,
+html[data-theme="light"] .border-zinc-700,
+html[data-theme="light"] .border-zinc-800 {
+  border-color: var(--border) !important;
+}
+
+/* Dark mode consistency */
+html[data-theme="dark"] .bg-white,
+html[data-theme="dark"] .bg-gray-50,
+html[data-theme="dark"] .bg-slate-50,
+html[data-theme="dark"] .bg-zinc-50 {
+  background-color: var(--card) !important;
+}
+
+html[data-theme="dark"] .text-black,
+html[data-theme="dark"] .text-gray-900,
+html[data-theme="dark"] .text-slate-900,
+html[data-theme="dark"] .text-zinc-900 {
+  color: var(--foreground) !important;
+}
+
+html[data-theme="dark"] .border-gray-200,
+html[data-theme="dark"] .border-slate-200,
+html[data-theme="dark"] .border-zinc-200 {
+  border-color: var(--border) !important;
+}
+
+/* Reduce visual density */
+main,
+section {
+  line-height: 1.65;
+}
+
+.card,
+.panel {
+  border-radius: var(--radius-xl);
+}
+
+/* Better scrollable tables and dense dashboards */
+.overflow-x-auto {
+  border-radius: var(--radius-lg);
+}
+
+pre,
+code {
+  font-size: 0.95rem;
 }
