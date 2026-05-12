@@ -128,6 +128,7 @@ export default function FundingPage() {
     const [updatingOpportunityId, setUpdatingOpportunityId] = useState<
         string | null
     >(null);
+    const [deletingOpportunityId, setDeletingOpportunityId] = useState<string | null>(null);
 
     const [scoringMode, setScoringMode] = useState<ScoringMode>("auto");
     const [statusFilter, setStatusFilter] =
@@ -655,14 +656,14 @@ export default function FundingPage() {
 
     function getDeadlineUrgencyTone(deadline: string | null) {
         if (!deadline) {
-            return "border-slate-700 text-slate-300";
+            return "border-[var(--border)] bg-[var(--muted)] text-[var(--foreground)]";
         }
 
         const today = new Date();
         const deadlineDate = new Date(deadline);
 
         if (Number.isNaN(deadlineDate.getTime())) {
-            return "border-slate-700 text-slate-300";
+            return "border-[var(--border)] bg-[var(--muted)] text-[var(--foreground)]";
         }
 
         today.setHours(0, 0, 0, 0);
@@ -672,18 +673,18 @@ export default function FundingPage() {
         const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 
         if (diffDays < 0) {
-            return "border-red-900 text-red-200";
+            return "border-red-400 bg-red-100 text-red-900 dark:border-red-700 dark:bg-red-950/60 dark:text-red-100";
         }
 
         if (diffDays <= 14) {
-            return "border-amber-900 text-amber-200";
+            return "border-amber-400 bg-amber-100 text-amber-900 dark:border-amber-700 dark:bg-amber-950/60 dark:text-amber-100";
         }
 
         if (diffDays <= 45) {
-            return "border-yellow-900 text-yellow-200";
+            return "border-yellow-400 bg-yellow-100 text-yellow-900 dark:border-yellow-700 dark:bg-yellow-950/60 dark:text-yellow-100";
         }
 
-        return "border-emerald-900 text-emerald-200";
+        return "border-emerald-400 bg-emerald-100 text-emerald-900 dark:border-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-100";
     }
 
     async function handleQuickStatusUpdate(
@@ -717,6 +718,65 @@ export default function FundingPage() {
 
         setMessage(`Opportunity status updated to ${newStatus}.`);
         setUpdatingOpportunityId(null);
+    }
+
+    async function deleteOpportunity(opportunityId: string) {
+        const confirmed = window.confirm(
+            "Are you sure you want to delete this opportunity? This will remove the saved opportunity, related fit-score records, and related proposal tasks."
+        );
+
+        if (!confirmed) return;
+
+        setDeletingOpportunityId(opportunityId);
+        setMessage("");
+        setErrorMessage("");
+
+        const { error: taskError } = await supabase
+            .from("proposal_tasks")
+            .delete()
+            .eq("opportunity_id", opportunityId);
+
+        if (taskError) {
+            console.error("Error deleting related proposal tasks:", taskError);
+            setErrorMessage(taskError.message);
+            setDeletingOpportunityId(null);
+            return;
+        }
+
+        const { error: matchError } = await supabase
+            .from("funding_matches")
+            .delete()
+            .eq("opportunity_id", opportunityId);
+
+        if (matchError) {
+            console.error("Error deleting related funding matches:", matchError);
+            setErrorMessage(matchError.message);
+            setDeletingOpportunityId(null);
+            return;
+        }
+
+        const { error: opportunityError } = await supabase
+            .from("funding_opportunities")
+            .delete()
+            .eq("id", opportunityId);
+
+        if (opportunityError) {
+            console.error("Error deleting opportunity:", opportunityError);
+            setErrorMessage(opportunityError.message);
+            setDeletingOpportunityId(null);
+            return;
+        }
+
+        setOpportunities((currentOpportunities) =>
+            currentOpportunities.filter((item) => item.id !== opportunityId)
+        );
+
+        setMatches((currentMatches) =>
+            currentMatches.filter((match) => match.opportunity_id !== opportunityId)
+        );
+
+        setMessage("Opportunity deleted successfully.");
+        setDeletingOpportunityId(null);
     }
 
     async function handleScoreOpportunity(opportunity: FundingOpportunity) {
@@ -1212,11 +1272,13 @@ export default function FundingPage() {
                         </form>
                     </div>
 
-                    <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
-                        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="theme-card p-6 sm:p-7">
+                        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                             <div>
-                                <h2 className="text-xl font-semibold">Tracked Opportunities</h2>
-                                <p className="mt-2 text-sm text-slate-400">
+                                <h2 className="text-3xl font-extrabold tracking-tight text-[var(--foreground)]">
+                                    Tracked Opportunities
+                                </h2>
+                                <p className="mt-3 text-base leading-7 text-[var(--muted-foreground)]">
                                     Filter saved opportunities by pipeline status.
                                 </p>
                             </div>
@@ -1224,7 +1286,7 @@ export default function FundingPage() {
                             <button
                                 type="button"
                                 onClick={loadPageData}
-                                className="rounded-xl border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:bg-slate-800"
+                                className="theme-button-secondary text-base"
                             >
                                 Refresh
                             </button>
@@ -1236,34 +1298,36 @@ export default function FundingPage() {
                                     key={filter}
                                     type="button"
                                     onClick={() => handleStatusFilterChange(filter)}
-                                    className={`rounded-xl border px-4 py-3 text-left transition ${statusFilter === filter
-                                        ? "border-white bg-white text-slate-950"
-                                        : "border-slate-800 bg-slate-950 text-slate-200 hover:border-slate-600"
-                                        }`}
+                                    className={[
+                                        "rounded-2xl border p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md",
+                                        statusFilter === filter
+                                            ? "border-[var(--primary)] bg-[var(--primary)] text-white"
+                                            : "border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] hover:border-[var(--primary)] hover:bg-[var(--muted)]",
+                                    ].join(" ")}
                                 >
-                                    <p className="text-sm font-semibold">
+                                    <p className="text-base font-extrabold text-current">
                                         {getStatusLabel(filter)}
                                     </p>
-                                    <p className="mt-1 text-2xl font-bold">
+                                    <p className="mt-4 text-4xl font-extrabold text-current">
                                         {getStatusCount(filter)}
                                     </p>
                                 </button>
                             ))}
                         </div>
 
-                        <p className="mb-4 text-sm text-slate-400">
+                        <p className="mb-5 text-base leading-7 text-[var(--muted-foreground)]">
                             Showing {filteredOpportunities.length} of {opportunities.length}{" "}
                             saved opportunities.
                         </p>
 
                         {loading && (
-                            <p className="mt-6 text-sm text-slate-400">
+                            <p className="mt-6 text-base text-[var(--muted-foreground)]">
                                 Loading opportunities...
                             </p>
                         )}
 
                         {!loading && opportunities.length === 0 && (
-                            <div className="mt-6 rounded-xl border border-slate-800 bg-slate-950 px-4 py-4 text-sm text-slate-300">
+                            <div className="mt-6 theme-card-soft px-5 py-5 text-base leading-7 text-[var(--muted-foreground)]">
                                 No funding opportunities saved yet.
                             </div>
                         )}
@@ -1271,7 +1335,7 @@ export default function FundingPage() {
                         {!loading &&
                             opportunities.length > 0 &&
                             filteredOpportunities.length === 0 && (
-                                <div className="mt-6 rounded-xl border border-slate-800 bg-slate-950 px-4 py-4 text-sm text-slate-300">
+                                <div className="mt-6 theme-card-soft px-5 py-5 text-base leading-7 text-[var(--muted-foreground)]">
                                     No opportunities found for this status filter.
                                 </div>
                             )}
@@ -1286,31 +1350,33 @@ export default function FundingPage() {
                                     return (
                                         <div
                                             key={item.id}
-                                            className="rounded-xl border border-slate-800 bg-slate-950 p-5"
+                                            className="theme-card-soft p-6 sm:p-7"
                                         >
                                             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                                 <div>
-                                                    <h3 className="font-semibold">{item.title}</h3>
-                                                    <p className="mt-2 text-sm text-slate-400">
+                                                    <h3 className="text-2xl font-extrabold leading-snug text-[var(--foreground)]">
+                                                        {item.title}
+                                                    </h3>
+                                                    <p className="mt-3 text-base leading-7 text-[var(--muted-foreground)]">
                                                         {item.agency || "Agency not provided"}
                                                         {item.program ? ` • ${item.program}` : ""}
                                                     </p>
 
                                                     <div className="mt-3 flex flex-wrap gap-2">
                                                         <span
-                                                            className={`rounded-full border px-3 py-1 text-xs ${urgencyTone}`}
+                                                            className={`inline-flex rounded-full border px-4 py-2 text-sm font-extrabold shadow-sm ${urgencyTone}`}
                                                         >
                                                             {urgencyLabel}
                                                         </span>
 
-                                                        <span className="rounded-full border border-slate-700 px-3 py-1 text-xs text-slate-300">
+                                                        <span className="inline-flex rounded-full border border-[var(--border)] bg-[var(--card)] px-4 py-2 text-sm font-bold text-[var(--foreground)] shadow-sm">
                                                             Deadline: {item.deadline || "Not provided"}
                                                         </span>
                                                     </div>
                                                 </div>
 
                                                 <div className="flex flex-col gap-2 sm:items-end">
-                                                    <span className="w-fit rounded-full border border-slate-700 px-3 py-1 text-xs capitalize text-slate-300">
+                                                    <span className="w-fit rounded-full border border-[var(--border)] bg-[var(--muted)] px-4 py-2 text-sm font-extrabold capitalize text-[var(--foreground)]">
                                                         {item.status || "watch"}
                                                     </span>
 
@@ -1323,7 +1389,7 @@ export default function FundingPage() {
                                                             )
                                                         }
                                                         disabled={updatingOpportunityId === item.id}
-                                                        className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-white outline-none transition focus:border-slate-400 disabled:cursor-not-allowed disabled:opacity-60"
+                                                        className="min-h-[52px] rounded-xl border border-[var(--border)] bg-[var(--card)] px-4 py-3 text-base font-bold text-[var(--foreground)] shadow-sm outline-none transition focus:border-[var(--primary)] disabled:cursor-not-allowed disabled:opacity-60"
                                                     >
                                                         <option value="watch">Watch</option>
                                                         <option value="concept">Concept</option>
@@ -1340,21 +1406,21 @@ export default function FundingPage() {
                                                 </div>
                                             </div>
 
-                                            <div className="mt-4 grid gap-3 text-sm text-slate-300 md:grid-cols-2">
+                                            <div className="mt-5 grid gap-3 text-base leading-7 text-[var(--foreground)] md:grid-cols-2">
                                                 <p>
-                                                    <span className="text-slate-500">Award:</span>{" "}
+                                                    <span className="font-semibold text-[var(--muted-foreground)]">Award:</span>{" "}
                                                     {item.award_amount || "Not provided"}
                                                 </p>
                                                 <p>
-                                                    <span className="text-slate-500">Source:</span>{" "}
+                                                    <span className="font-semibold text-[var(--muted-foreground)]">Source:</span>{" "}
                                                     {item.source || "manual"}
                                                 </p>
                                                 <p>
-                                                    <span className="text-slate-500">Eligibility:</span>{" "}
+                                                    <span className="font-semibold text-[var(--muted-foreground)]">Eligibility:</span>{" "}
                                                     {item.eligibility || "Not provided"}
                                                 </p>
                                                 <p>
-                                                    <span className="text-slate-500">Created:</span>{" "}
+                                                    <span className="font-semibold text-[var(--muted-foreground)]">Created:</span>{" "}
                                                     {item.created_at
                                                         ? new Date(item.created_at).toLocaleDateString()
                                                         : "Not available"}
@@ -1362,24 +1428,24 @@ export default function FundingPage() {
                                             </div>
 
                                             {item.summary && (
-                                                <p className="mt-4 text-sm leading-6 text-slate-400">
+                                                <p className="mt-5 text-base leading-8 text-[var(--muted-foreground)]">
                                                     {item.summary}
                                                 </p>
                                             )}
 
                                             {match && (
-                                                <div className="mt-5 rounded-xl border border-emerald-900 bg-emerald-950/30 p-4">
+                                                <div className="mt-6 rounded-2xl border border-emerald-300 bg-emerald-50 p-5 text-emerald-950 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-100">
                                                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                                                         <div>
-                                                            <p className="text-sm text-emerald-300">
+                                                            <p className="text-base font-semibold text-emerald-700 dark:text-emerald-300">
                                                                 Fit Score
                                                             </p>
-                                                            <h4 className="mt-1 text-3xl font-bold text-white">
+                                                            <h4 className="mt-1 text-4xl font-extrabold text-[var(--foreground)]">
                                                                 {match.total_score}/100
                                                             </h4>
                                                         </div>
 
-                                                        <p className="text-sm text-slate-300">
+                                                        <p className="text-base font-semibold text-[var(--foreground)]">
                                                             {match.total_score && match.total_score >= 85
                                                                 ? "Pursue now"
                                                                 : match.total_score && match.total_score >= 70
@@ -1391,13 +1457,13 @@ export default function FundingPage() {
                                                     </div>
 
                                                     <div className="mt-4">
-                                                        <span className="rounded-full border border-slate-700 px-3 py-1 text-xs text-slate-300">
+                                                        <span className="rounded-full border border-[var(--border)] bg-[var(--card)] px-4 py-2 text-sm font-bold text-[var(--foreground)]">
                                                             Scoring method:{" "}
                                                             {match.scoring_method || "rule_based_v1"}
                                                         </span>
                                                     </div>
 
-                                                    <p className="mt-4 text-sm leading-6 text-slate-300">
+                                                    <p className="mt-5 text-base leading-8 text-[var(--foreground)]">
                                                         {match.fit_reason}
                                                     </p>
                                                 </div>
@@ -1406,7 +1472,7 @@ export default function FundingPage() {
                                             <div className="mt-5 flex flex-col gap-3 sm:flex-row">
                                                 <a
                                                     href={`/funding/${item.id}`}
-                                                    className="rounded-xl border border-slate-700 px-4 py-2 text-center text-sm font-semibold text-slate-200 transition hover:bg-slate-800"
+                                                    className="theme-button-primary text-base"
                                                 >
                                                     View Details
                                                 </a>
@@ -1415,7 +1481,7 @@ export default function FundingPage() {
                                                     type="button"
                                                     disabled={scoringId === item.id}
                                                     onClick={() => handleScoreOpportunity(item)}
-                                                    className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
+                                                    className="inline-flex items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--muted)] px-5 py-3 text-base font-bold text-[var(--foreground)] shadow-sm transition hover:bg-[var(--card)] disabled:cursor-not-allowed disabled:opacity-60"
                                                 >
                                                     {scoringId === item.id
                                                         ? "Scoring..."
@@ -1429,11 +1495,22 @@ export default function FundingPage() {
                                                         href={item.url}
                                                         target="_blank"
                                                         rel="noreferrer"
-                                                        className="rounded-xl border border-slate-700 px-4 py-2 text-center text-sm font-semibold text-slate-200 transition hover:bg-slate-800"
+                                                        className="theme-button-secondary text-base"
                                                     >
                                                         Open funding page
                                                     </a>
                                                 )}
+
+                                                <button
+                                                    type="button"
+                                                    onClick={() => deleteOpportunity(item.id)}
+                                                    disabled={deletingOpportunityId === item.id}
+                                                    className="inline-flex items-center justify-center rounded-xl border border-red-300 bg-red-50 px-5 py-3 text-base font-extrabold text-red-800 shadow-sm transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-800 dark:bg-red-950/40 dark:text-red-100 dark:hover:bg-red-900/50"
+                                                >
+                                                    {deletingOpportunityId === item.id
+                                                        ? "Deleting..."
+                                                        : "Delete"}
+                                                </button>
                                             </div>
                                         </div>
                                     );
