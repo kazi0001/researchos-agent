@@ -377,6 +377,25 @@ export default function FundingPage() {
         setSearchingGrants(false);
     }
 
+    function clearGrantsSearchResults() {
+        setGrantsResults([]);
+        setGrantsSearchMessage("");
+        setGrantsSearchError("");
+    }
+
+    function removeGrantSearchResult(item: GrantsGovOpportunity) {
+        setGrantsResults((currentResults) =>
+            currentResults.filter(
+                (result) =>
+                    !(
+                        result.source_id === item.source_id &&
+                        result.title === item.title &&
+                        result.opportunity_number === item.opportunity_number
+                    )
+            )
+        );
+    }
+
     function getFetchOpportunityId(item: GrantsGovOpportunity) {
         return (
             item.source_id ||
@@ -827,17 +846,19 @@ export default function FundingPage() {
                     </div>
                 )}
 
-                <div className="mb-6 rounded-2xl border border-slate-800 bg-slate-900 p-6">
-                    <div className="flex flex-col gap-4 lg:flex-row lg:items-end">
+                <div className="mb-6 theme-card p-6 sm:p-7">
+                    <div className="flex flex-col gap-5 xl:flex-row xl:items-end">
                         <div className="flex-1">
-                            <h2 className="text-xl font-semibold">Search Grants.gov</h2>
-                            <p className="mt-2 text-sm text-slate-400">
+                            <h2 className="text-2xl font-extrabold tracking-tight text-[var(--foreground)]">
+                                Search Grants.gov
+                            </h2>
+                            <p className="mt-2 max-w-4xl text-base leading-7 text-[var(--muted-foreground)]">
                                 Search real federal funding opportunities by keyword. When you
                                 import a result, ResearchOS Agent first fetches richer Grants.gov
                                 details and then saves the opportunity.
                             </p>
 
-                            <label className="mt-5 block text-sm font-medium text-slate-300">
+                            <label className="mt-5 block text-base font-bold text-[var(--foreground)]">
                                 Search keyword
                             </label>
                             <input
@@ -845,12 +866,12 @@ export default function FundingPage() {
                                 value={grantsKeyword}
                                 onChange={(event) => setGrantsKeyword(event.target.value)}
                                 placeholder="critical minerals, artificial intelligence, hydrogen"
-                                className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-slate-400"
+                                className="mt-2 w-full"
                             />
                         </div>
 
-                        <div className="w-full lg:w-40">
-                            <label className="block text-sm font-medium text-slate-300">
+                        <div className="w-full xl:w-48">
+                            <label className="block text-base font-bold text-[var(--foreground)]">
                                 Results
                             </label>
                             <input
@@ -859,81 +880,100 @@ export default function FundingPage() {
                                 max="50"
                                 value={grantsRows}
                                 onChange={(event) => setGrantsRows(event.target.value)}
-                                className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition focus:border-slate-400"
+                                className="mt-2 w-full"
                             />
                         </div>
 
-                        <button
-                            type="button"
-                            onClick={handleGrantsGovSearch}
-                            disabled={searchingGrants}
-                            className="rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                            {searchingGrants ? "Searching..." : "Search Grants.gov"}
-                        </button>
+                        <div className="flex w-full flex-col gap-3 sm:flex-row xl:w-auto">
+                            <button
+                                type="button"
+                                onClick={handleGrantsGovSearch}
+                                disabled={searchingGrants}
+                                className="inline-flex min-h-[56px] items-center justify-center rounded-xl bg-[var(--primary)] px-8 py-4 text-base font-extrabold text-[var(--primary-foreground)] shadow-lg transition hover:-translate-y-0.5 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                                {searchingGrants ? "Searching..." : "Search Grants.gov"}
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={clearGrantsSearchResults}
+                                disabled={grantsResults.length === 0 && !grantsSearchMessage && !grantsSearchError}
+                                className="inline-flex min-h-[56px] items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--card)] px-8 py-4 text-base font-bold text-[var(--foreground)] shadow-sm transition hover:bg-[var(--muted)] disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                Clear Results
+                            </button>
+                        </div>
                     </div>
 
                     {grantsSearchMessage && (
-                        <div className="mt-5 rounded-xl border border-emerald-900 bg-emerald-950/40 px-4 py-3 text-sm text-emerald-200">
+                        <div className="mt-5 rounded-2xl border border-emerald-300 bg-emerald-50 px-6 py-5 text-base font-semibold leading-7 text-emerald-900 shadow-sm dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-100">
                             {grantsSearchMessage}
                         </div>
                     )}
 
                     {grantsSearchError && (
-                        <div className="mt-5 rounded-xl border border-red-900 bg-red-950/40 px-4 py-3 text-sm text-red-200">
+                        <div className="mt-5 rounded-2xl border border-red-300 bg-red-50 px-6 py-5 text-base font-semibold leading-7 text-red-900 shadow-sm dark:border-red-800 dark:bg-red-950/40 dark:text-red-100">
                             {grantsSearchError}
                         </div>
                     )}
 
                     {grantsResults.length > 0 && (
-                        <div className="mt-6 space-y-4">
+                        <div className="mt-6 space-y-5">
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                <p className="text-base font-semibold text-[var(--muted-foreground)]">
+                                    Showing {grantsResults.length} search result{grantsResults.length === 1 ? "" : "s"}. Remove items you do not want to keep on this screen, or import the ones you want to save.
+                                </p>
+                            </div>
+
                             {grantsResults.map((item) => {
                                 const alreadyImported = isAlreadyImported(item);
 
                                 return (
                                     <div
                                         key={`${item.source_id}-${item.title}`}
-                                        className="rounded-xl border border-slate-800 bg-slate-950 p-5"
+                                        className="theme-card-soft p-5 sm:p-6"
                                     >
-                                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                                            <div>
-                                                <p className="text-sm text-slate-500">
+                                        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                                            <div className="max-w-4xl">
+                                                <p className="text-base font-semibold text-[var(--muted-foreground)]">
                                                     Grants.gov result
                                                 </p>
 
-                                                <h3 className="mt-2 font-semibold">{item.title}</h3>
+                                                <h3 className="mt-2 text-2xl font-bold leading-snug text-[var(--foreground)]">
+                                                    {item.title}
+                                                </h3>
 
-                                                <p className="mt-2 text-sm text-slate-400">
+                                                <p className="mt-2 text-base leading-7 text-[var(--muted-foreground)]">
                                                     {item.agency || "Agency not provided"}
                                                     {item.agency_code ? ` • ${item.agency_code}` : ""}
                                                 </p>
                                             </div>
 
-                                            <span className="w-fit rounded-full border border-slate-700 px-3 py-1 text-xs capitalize text-slate-300">
+                                            <span className="w-fit rounded-full border border-[var(--border)] bg-[var(--muted)] px-4 py-2 text-sm font-bold capitalize text-[var(--foreground)]">
                                                 {alreadyImported
                                                     ? "imported"
                                                     : item.status || "status unknown"}
                                             </span>
                                         </div>
 
-                                        <div className="mt-4 grid gap-3 text-sm text-slate-300 md:grid-cols-3">
-                                            <p>
-                                                <span className="text-slate-500">Opportunity #:</span>{" "}
+                                        <div className="mt-5 grid gap-3 text-base leading-7 md:grid-cols-3">
+                                            <p className="text-[var(--foreground)]">
+                                                <span className="font-semibold text-[var(--muted-foreground)]">Opportunity #:</span>{" "}
                                                 {item.opportunity_number || "Not provided"}
                                             </p>
 
-                                            <p>
-                                                <span className="text-slate-500">Posted:</span>{" "}
+                                            <p className="text-[var(--foreground)]">
+                                                <span className="font-semibold text-[var(--muted-foreground)]">Posted:</span>{" "}
                                                 {item.posted_date || "Not provided"}
                                             </p>
 
-                                            <p>
-                                                <span className="text-slate-500">Deadline:</span>{" "}
+                                            <p className="text-[var(--foreground)]">
+                                                <span className="font-semibold text-[var(--muted-foreground)]">Deadline:</span>{" "}
                                                 {item.deadline || "Not provided"}
                                             </p>
                                         </div>
 
-                                        <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+                                        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                                             <button
                                                 type="button"
                                                 onClick={() => handleImportGrant(item)}
@@ -941,7 +981,7 @@ export default function FundingPage() {
                                                     importingSourceId === item.source_id ||
                                                     alreadyImported
                                                 }
-                                                className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
+                                                className="theme-button-primary text-base disabled:cursor-not-allowed disabled:opacity-60"
                                             >
                                                 {alreadyImported
                                                     ? "Already Imported"
@@ -955,11 +995,19 @@ export default function FundingPage() {
                                                     href={item.url}
                                                     target="_blank"
                                                     rel="noreferrer"
-                                                    className="rounded-xl border border-slate-700 px-4 py-2 text-center text-sm font-semibold text-slate-200 transition hover:bg-slate-800"
+                                                    className="theme-button-secondary text-base"
                                                 >
                                                     Open Grants.gov Page
                                                 </a>
                                             )}
+
+                                            <button
+                                                type="button"
+                                                onClick={() => removeGrantSearchResult(item)}
+                                                className="inline-flex items-center justify-center rounded-xl border border-red-300 bg-red-50 px-4 py-2 text-base font-bold text-red-800 transition hover:bg-red-100 dark:border-red-800 dark:bg-red-950/40 dark:text-red-100 dark:hover:bg-red-900/60"
+                                            >
+                                                Remove from Results
+                                            </button>
                                         </div>
                                     </div>
                                 );
@@ -1189,8 +1237,8 @@ export default function FundingPage() {
                                     type="button"
                                     onClick={() => handleStatusFilterChange(filter)}
                                     className={`rounded-xl border px-4 py-3 text-left transition ${statusFilter === filter
-                                            ? "border-white bg-white text-slate-950"
-                                            : "border-slate-800 bg-slate-950 text-slate-200 hover:border-slate-600"
+                                        ? "border-white bg-white text-slate-950"
+                                        : "border-slate-800 bg-slate-950 text-slate-200 hover:border-slate-600"
                                         }`}
                                 >
                                     <p className="text-sm font-semibold">
