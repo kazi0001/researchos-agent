@@ -408,6 +408,18 @@ export default function FundingPage() {
         );
     }
 
+    function getGrantsGovDetailUrl(item: GrantsGovOpportunity) {
+        const detailId = getFetchOpportunityId(item);
+
+        if (!detailId) {
+            return item.url || "https://www.grants.gov/search-results";
+        }
+
+        return `https://www.grants.gov/search-results-detail/${encodeURIComponent(
+            String(detailId)
+        )}`;
+    }
+
     function isAlreadyImported(item: GrantsGovOpportunity) {
         const sourceId = getFetchOpportunityId(item);
 
@@ -533,7 +545,7 @@ export default function FundingPage() {
         const importedProgram =
             details?.opportunity_number || item.opportunity_number || item.category || "";
 
-        const importedUrl = details?.url || item.url;
+        const importedUrl = details?.url || getGrantsGovDetailUrl(item);
         const importedDeadline = details?.deadline || item.deadline || null;
         const importedEligibility = details?.eligibility || "";
         const importedSummary =
@@ -1050,16 +1062,14 @@ export default function FundingPage() {
                                                         : "Import Full Details"}
                                             </button>
 
-                                            {item.url && (
-                                                <a
-                                                    href={item.url}
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                    className="theme-button-secondary text-base"
-                                                >
-                                                    Open Grants.gov Page
-                                                </a>
-                                            )}
+                                            <a
+                                                href={getGrantsGovDetailUrl(item)}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="theme-button-secondary text-base"
+                                            >
+                                                Open Exact Grants.gov Call
+                                            </a>
 
                                             <button
                                                 type="button"
